@@ -20,8 +20,9 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple, Set, Optional
 from dataclasses import dataclass
 import json
-from CAARL_incontext_scenario2 import CAARLStep1
+from CAARL_incontext_scenario2 import CAARLStep1 
 from CAARL_serialization import run_caarl_step3
+from CAARL_prediction_step import create_ai_config, run_caarl_step4_ai 
 
 
 import seaborn as sns
@@ -803,9 +804,24 @@ def run_caarl_step2(step1_results: Dict) -> Dict:
     return graph_results
 
 
-dataname = 'FXs_interpolated' #'SyD-50', 'ETTh1', 'FXs_interpolated'
+dataname = 'rock_data' #'SyD-50', 'ETTh1', 'FXs_interpolated', info_tech_sector, passengers
 path_to_data = '~/Documents/Projets/Causal-Inference-Graph-Modeling-in-CoEvolving-Time-Sequences 2/dataset/'+dataname+'.csv'
 df = DataHandler(path_to_data, size=None, stride=None)._load_data(path_to_data, normalize=True)
+
+# Example configuration for OpenAI
+openai_config = create_ai_config(
+    provider="openai",
+    model="gpt-4",
+    api_key="your-openai-api-key"  # or set OPENAI_API_KEY environment variable
+)
+
+# Example configuration for Anthropic
+anthropic_config = create_ai_config(
+    provider="anthropic", 
+    model="claude-3-sonnet-20240229",
+    api_key="your-anthropic-api-key"  # or set ANTHROPIC_API_KEY environment variable
+)
+
 
 if __name__ == '__main__':
     caarl_auto = CAARLStep1(auto_params=True, change_detection_priority="medium")
@@ -837,4 +853,7 @@ if __name__ == '__main__':
         
     graph_results = run_caarl_step2(results_auto)
     
-    run_caarl_step3(results_auto, graph_results, target_series='HUFL') 
+    result_narrative = run_caarl_step3(results_auto, graph_results, target_series='HUFL') 
+    result_narrative2 = run_caarl_step3(results_auto, graph_results, target_series=None) 
+    
+    results = run_caarl_step4_ai(results_auto, graph_results, result_narrative2, openai_config, "0")
